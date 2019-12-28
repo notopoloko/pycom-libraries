@@ -1,0 +1,17 @@
+{
+    "stat":{
+        "time":"2012-01-01 02:56:41 UTC",
+        "lati":-15.75917,
+        "long":-47.86908,
+        "alti":0,
+        "rxnb":0,
+        "rxok":0,
+        "rxfw":0,
+        "ackr":0.0,
+        "dwnb":0,
+        "txnb":0,
+        "pfrm":"LG01/OLG01",
+        "mail":"mfcaetano@unb.br",
+        "desc":"DESC"
+    }
+}

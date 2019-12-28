@@ -1,0 +1,18 @@
+{"txpk":
+    [
+        {
+            "imme":false,
+            "tmst":861608339,
+            "freq":915.6,
+            "rfch":0,
+            "powe":20,
+            "modu":"LORA",
+            "datr":"SF10BW125",
+            "codr":"4/5",
+            "ipol":true,
+            "size":22,
+            "ncrc":true,
+            "data":"YEklBCaqCgADQAIAcQM6AP8B9TYzUA=="
+        }
+    ]
+}

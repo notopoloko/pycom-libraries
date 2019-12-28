@@ -15,7 +15,7 @@ import socket
 import binascii
 import struct
 import time
-import config
+# import config
 
 # initialize LoRa in LORAWAN mode.
 # Please pick the region that matches where you are using the device:
@@ -36,10 +36,10 @@ for channel in range(0, 72):
 
 # set all channels to the same frequency (must be before sending the OTAA join request)
 for channel in range(0, 72):
-    lora.add_channel(channel, frequency=config.LORA_FREQUENCY, dr_min=0, dr_max=3)
+    lora.add_channel(channel, frequency=915600000, dr_min=0, dr_max=3)
 
 # join a network using OTAA
-lora.join(activation=LoRa.OTAA, auth=(dev_eui, app_eui, app_key), timeout=0, dr=config.LORA_NODE_DR)
+lora.join(activation=LoRa.OTAA, auth=(dev_eui, app_eui, app_key), timeout=0, dr=0)
 
 # wait until the module has joined the network
 join_wait = 0
@@ -49,7 +49,7 @@ while True:
         print('Not joined yet...')
         join_wait += 1
         if join_wait == 5:
-            lora.join(activation=LoRa.OTAA, auth=(dev_eui, app_eui, app_key), timeout=0, dr=config.LORA_NODE_DR)
+            lora.join(activation=LoRa.OTAA, auth=(dev_eui, app_eui, app_key), timeout=0, dr=0)
             join_wait = 0
     else:
         break
@@ -58,7 +58,7 @@ while True:
 s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
 
 # set the LoRaWAN data rate
-s.setsockopt(socket.SOL_LORA, socket.SO_DR, config.LORA_NODE_DR)
+s.setsockopt(socket.SOL_LORA, socket.SO_DR, 0)
 
 # make the socket non-blocking
 s.setblocking(False)

@@ -13,7 +13,7 @@ import socket
 import binascii
 import struct
 import time
-import config
+# import config
 
 # initialize LoRa in LORAWAN mode.
 # Please pick the region that matches where you are using the device:
@@ -27,14 +27,13 @@ lora = LoRa(mode=LoRa.LORAWAN, region=LoRa.US915)
 dev_addr = struct.unpack(">l", binascii.unhexlify('2601147D'))[0]
 nwk_swkey = binascii.unhexlify('3C74F4F40CAEA021303BC24284FCF3AF')
 app_swkey = binascii.unhexlify('0FFA7072CC6FF69A102A0F39BEB0880F')
-
 # remove all the channels
 for channel in range(0, 72):
     lora.remove_channel(channel)
 
 # set all channels to the same frequency (must be before sending the OTAA join request)
 for channel in range(0, 72):
-    lora.add_channel(channel, frequency=config.LORA_FREQUENCY, dr_min=0, dr_max=3)
+    lora.add_channel(channel, frequency=915600000, dr_min=0, dr_max=0)
 
 # join a network using ABP (Activation By Personalization)
 lora.join(activation=LoRa.ABP, auth=(dev_addr, nwk_swkey, app_swkey))
@@ -43,17 +42,19 @@ lora.join(activation=LoRa.ABP, auth=(dev_addr, nwk_swkey, app_swkey))
 s = socket.socket(socket.AF_LORA, socket.SOCK_RAW)
 
 # set the LoRaWAN data rate
-s.setsockopt(socket.SOL_LORA, socket.SO_DR, config.LORA_NODE_DR)
+s.setsockopt(socket.SOL_LORA, socket.SO_DR, 0)
 
 # make the socket non-blocking
 s.setblocking(False)
 
-for i in range (200):
+for i in range (10):
     pkt = b'PKT #' + bytes([i])
     print('Sending:', pkt)
     s.send(pkt)
+    # print(lora.stats())
+    rx = s.recv( 64 )
     time.sleep(4)
-    rx, port = s.recvfrom(256)
+    rx = s.recv( 64 )
     if rx:
-        print('Received: {}, on port: {}'.format(rx, port))
+        print('Received: {}'.format(rx))
     time.sleep(6)
