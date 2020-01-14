@@ -1,3 +1,5 @@
+#coding=utf-8
+
 from Crypto.Hash import CMAC
 from Crypto.Cipher import AES
 from binascii import unhexlify, hexlify
@@ -16,58 +18,58 @@ class LoRaWANPkt(object):
             self.__AppSKey = AppSKey
 
             # Campos do cabeçalho da camada MAC
-            self.__Mtype: int = 0
-            self.__RFU: int = 0
-            self.__Major: int = 0
+            self.__Mtype = 0
+            self.__RFU = 0
+            self.__Major = 0
 
             self.__MHDR = self.__getMHDR()
 
             self.__MACPayload = self.__getMACPayload()
 
-            self.__MIC: str = ''
+            self.__MIC = ''
             self.__getMIC()
 
             # Campos do cabeçalho de frame
-            self.__DevAddrHex: str = ''
-            self.__FCnt: int = 0
+            self.__DevAddrHex = ''
+            self.__FCnt = 0
 
             # Campos de FCtrl
-            self.__FCtrl: int = 0
-            self.__ADR: int = 0
-            self.__ADRACKREQ: int = 0
-            self.__RFU: int = 0
-            self.__ACK: int = 0
-            self.__FPending: int = 0
-            self.__FOptsLen: int = 0
-            self.__FOpts: str = ''
+            self.__FCtrl = 0
+            self.__ADR = 0
+            self.__ADRACKREQ = 0
+            self.__RFU = 0
+            self.__ACK = 0
+            self.__FPending = 0
+            self.__FOptsLen = 0
+            self.__FOpts = ''
             self.__getFHDR()
             
             # Campo de porta da mensagem
-            self.__FPort: int = 0
+            self.__FPort = 0
             self.__getFPort()
 
             # Payload da mensagem
-            self.__FRMPayload: str = ''
+            self.__FRMPayload = ''
             self.__getFRMPayload()
 
             # Checa integridade
             self.__checkMIC()
 
             # Decifra payload
-            self.__FRMPayloadDecrypted: str = ''
+            self.__FRMPayloadDecrypted = ''
             self.__decryptPayload()
 
         except ValueError as ve:
             print('Construtor está esperando uma string em hexadecimal', ve)
             raise ve
 
-    def setLoRaPkt(self, loraPkt: str):
-        try:
-            int(loraPkt, 16)
-            self.loraPkt = loraPkt
-        except ValueError as ve:
-            print('Função setLoRaPkt está esperando uma string em hexadecimal')
-            raise ve
+    # def setLoRaPkt(self, loraPkt: str):
+    #     try:
+    #         int(loraPkt, 16)
+    #         self.loraPkt = loraPkt
+    #     except ValueError as ve:
+    #         print('Função setLoRaPkt está esperando uma string em hexadecimal')
+    #         raise ve
 
     def __getMACPayload(self):
         try:
@@ -146,7 +148,7 @@ class LoRaWANPkt(object):
 
     def __checkMIC(self):
         # Gera bloco B0
-        B0: bytes = bytes.fromhex('4900000000')
+        B0 = bytes.fromhex('4900000000')
         # Insere direcao da mensagem
         if self.__Mtype % 2 == 0:
             # UpLink Msg
@@ -185,11 +187,11 @@ class LoRaWANPkt(object):
         # Forma os blocos para decifrar a mensagem de acordo com a especificacao 1.0.2
         # S = S1 | S2 | S3 ...
         numOfBlocks = ceil(len(self.__FRMPayload) / (2*16))
-        S: bytes = bytes()
+        S = bytes()
         i = 1
         while i <= numOfBlocks:
             # Cria os blocos para decifrar a mensagem
-            Stemp: bytes = bytes()
+            Stemp = bytes()
             Stemp += bytes.fromhex('0100000000')
             # Insere o byte de direcao
             if self.__Mtype % 2 == 0:
@@ -213,15 +215,14 @@ class LoRaWANPkt(object):
             i += 1
         
         # Completa o tamanho da mensagem com padding de zeros
-        payload: bytes = bytes.fromhex(self.__FRMPayload)
+        payload = bytes.fromhex(self.__FRMPayload)
         payload = payload.ljust(16, bytes([0x00]))
         
         # print(len(payload), payload.hex(), padLen, S.hex())
 
         # Faz um XOR entre S e o payload pra resgatar a mensagem original
-        decripted = [ chr(a ^ b) for (a,b) in zip(payload, S) ][0:(len(self.__FRMPayload) // 2)]
-        print(decripted)
-        # self.__FRMPayloadDecrypted = "".join(decripted)
+        decripted = [ a ^ b for (a,b) in zip(payload, S) ][0:(len(self.__FRMPayload) // 2)]
+        self.__FRMPayloadDecrypted = ''.join('{:02x}'.format(x) for x in decripted)
 
 
     def getMType(self):

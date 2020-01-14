@@ -1,3 +1,5 @@
+#coding=utf-8
+
 # JOIN_REQUEST = 0
 # JOIN_ACCEPT  = 1
 # UNCONFIRMED_DATA_UP = 2
@@ -7,3 +9,12 @@
 # RFU = 6
 
 stringMessageType = ['JOIN_REQUEST', 'JOIN_ACCEPT', 'UNCONFIRMED_DATA_UP', 'UNCONFIRMED_DATA_DOWN', 'CONFIRMED_DATA_UP', 'CONFIRMED_DATA_DOWN', 'RFU']
+
+# Constantes referentes ao protocolo entre GW e Servidor de rede
+PROTOCOL_VERSION = 2
+PKT_PUSH_DATA = 0
+PKT_PUSH_ACK = 1
+PKT_PULL_DATA = 2
+PKT_PULL_RESP = 3
+PKT_PULL_ACK = 4
+PKT_TX_ACK = 5
