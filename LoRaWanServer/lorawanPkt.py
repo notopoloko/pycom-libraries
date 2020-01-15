@@ -80,7 +80,7 @@ class LoRaWANPkt(object):
 
 		# Forma o cabecalho FHDR (DevAddr | FCtrl | FCnt | FOpts)
 		# FCtrl = (ADR | RFU | ACK | FPending | FOptsLen)
-		self.__loraPkt += ( bytes.fromhex(DevAddr) [::-1] ).hex() # Big-endian
+		self.__loraPkt += ( bytes.fromhex(DevAddr) [::-1] ).hex() # Little-endian
 		FCtrl = 0
 		# Check ADR e RFU
 		if ADR:
@@ -101,7 +101,7 @@ class LoRaWANPkt(object):
 		if FOptsLen > 0:
 			self.__loraPkt += FOpts
 		# Adiciona porta
-		self.__loraPkt += '{:02x}'.format(FPort) # Big-endian
+		self.__loraPkt += '{:02x}'.format(FPort) # Little-endian
 		# Cifrar a mensagem antes de calcular o MIC
 		# Necessario saber o tamanho do payload
 		payloadSize = len(FRMPayload)
@@ -129,7 +129,7 @@ class LoRaWANPkt(object):
 			# Insere o endereco do dispositivo
 			Stemp += bytes.fromhex(DevAddr)[::-1]
 			# Insere o contador
-			Stemp += FCnt.to_bytes(2, 'big')
+			Stemp += FCnt.to_bytes(2, 'little')
 			# Insere os dois bytes mais significativos + byte zerado. Por enquanto assumindo 0
 			Stemp += bytes.fromhex('000000')
 			# Insere o numero do bloco
@@ -137,13 +137,10 @@ class LoRaWANPkt(object):
 			# Cifra o bloco
 			S += crypto.encrypt(Stemp)
 			i += 1
-
 		# Completa o tamanho da mensagem com padding de zeros
 		payload = str.encode( FRMPayload )
 		if payloadSize % 16 != 0:
 			payload = payload.ljust( 16 - (payloadSize % 16) + payloadSize , bytes([0x00]))
-		
-		# print(len(payload), payload.hex(), padLen, S.hex())
 
 		# Faz um XOR entre S e o payload para cifrar a mensagem original
 		encripted = [ a ^ b for (a,b) in zip(payload, S) ][0:payloadSize]
@@ -159,13 +156,13 @@ class LoRaWANPkt(object):
 			# Downlink Msg
 			B0 += bytes.fromhex('01')
 		# Insere endereco do dispositivo
-		B0 += bytes.fromhex(DevAddr)
+		B0 += bytes.fromhex(DevAddr)[::-1]
 		# Insere o contador
-		B0 += FCnt.to_bytes(2, 'big')
+		B0 += FCnt.to_bytes(2, 'little')
 		# Insere os dois bytes mais significaticos. Por enquanto assumindo 0
 		B0 += bytes.fromhex('0000')
 		# Insere 0x00 + tamanho da mensagem
-		B0 += payloadSize.to_bytes(2, 'big')
+		B0 += (len(self.__loraPkt) // 2).to_bytes(2, 'big')
 		# Retira MIC da mensagem e adiciona B0 -> B0 | MSG
 		__Message = unhexlify( self.__loraPkt)
 		__Message = B0 + __Message
@@ -175,6 +172,25 @@ class LoRaWANPkt(object):
 		cobj.update(__Message)
 		# Integridade checada com os 4 primeiros bytes
 		self.__loraPkt += cobj.hexdigest()[0:8]
+		# Atualiza campos da mensagem
+		self.__NwkSKey = NwkSKey
+		self.__AppSKey = AppSKey
+
+		self.__MHDR = self.__getMHDR()
+
+		self.__MACPayload = self.__getMACPayload()
+
+		self.__getMIC()
+
+		self.__getFHDR()
+
+		self.__getFPort()
+
+		self.__getFRMPayload()
+
+		self.__checkMIC()
+
+		self.__decryptPayload()
 		print(self.__loraPkt)
 
 
@@ -274,7 +290,6 @@ class LoRaWANPkt(object):
 		# Retira MIC da mensagem e adiciona B0 -> B0 | MSG
 		__Message = unhexlify( self.__loraPkt[:-8])
 		__Message = B0 + __Message
-
 		# Cria um Hash
 		cobj = CMAC.new(self.__NwkSKey, ciphermod=AES)
 		cobj.update(__Message)
@@ -325,7 +340,6 @@ class LoRaWANPkt(object):
 		payload = bytes.fromhex(self.__FRMPayload)
 		if len(payload) % 16 != 0:
 			payload = payload.ljust(16 - len(payload) % 16 + len(payload), bytes([0x00]))
-		
 		# print(len(payload), payload.hex(), padLen, S.hex())
 
 		# Faz um XOR entre S e o payload pra resgatar a mensagem original
@@ -432,5 +446,6 @@ if __name__ == "__main__":
 	pkt = LoRaWANPkt(data, nwk_swkey, app_swkey)
 	loraPktPrettyPrint(pkt)
 
-	pkt.setDownlinkLoRaPktMsg(UNCONFIRMED_DATA_UP, '2601147D', False, False, False, 0, 8, '', 2, 'PKT #\x08', nwk_swkey, app_swkey)
+	pkt.setDownlinkLoRaPktMsg(UNCONFIRMED_DATA_UP, '2601147D', False, False, False, 0, 8, '', 2, 'PKT #8', nwk_swkey, app_swkey)
 	print(data)
+	loraPktPrettyPrint(pkt)
