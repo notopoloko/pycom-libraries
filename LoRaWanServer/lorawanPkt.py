@@ -4,6 +4,7 @@ from Crypto.Hash import CMAC
 from Crypto.Cipher import AES
 from binascii import unhexlify, hexlify
 from math import ceil
+import base64
 from utils import loraPktPrettyPrint
 from consts import *
 
@@ -67,8 +68,8 @@ class LoRaWANPkt(object):
 
 	def setDownlinkLoRaPktMsg(self, MType: int, DevAddr: str, ADR: bool, ACK: bool, FPending: bool, FOptsLen: int, FCnt: int, FOpts: str, FPort: int, FRMPayload: str, NwkSKey: bytes, AppSKey: bytes):
 		# Checagem de parametros
-		if MType < 0 and MType > 5:
-			raise ValueError('Parametro MType deve estar na faixa [0 - 5]')
+		if MType < 0 or MType > 5 or MType % 2 != 1:
+			raise ValueError('Parametro MType deve estar na faixa [0 - 5] e deve ser do tipo downlink')
 		try:
 			int(DevAddr, 16)
 		except ValueError:
@@ -191,8 +192,6 @@ class LoRaWANPkt(object):
 		self.__checkMIC()
 
 		self.__decryptPayload()
-		print(self.__loraPkt)
-
 
 	def __getMACPayload(self):
 		try:
@@ -437,15 +436,21 @@ class LoRaWANPkt(object):
 		'''
 		return self.__FRMPayloadDecrypted
 
+	def getLoRaPktMsg(self) -> str:
+		'''
+		Retorna uma string em hexadecimal com a mensagem passada no construtor ou montada pelo metodo setDownlinkLoRaPktMsg
+		'''
+		return self.__loraPkt
+
 if __name__ == "__main__":
 	nwk_swkey = unhexlify('3C74F4F40CAEA021303BC24284FCF3AF')
 	app_swkey = unhexlify('0FFA7072CC6FF69A102A0F39BEB0880F')
 
 	# data = '407d140126000800021d3cca607f372685e76e'
-	data = '407d140126000800021d3cca607f072383f23f'
+	data = base64.b64decode('YH0UASYABAACtuCCHCAOsbrykSQJbCY6tqhCHcbIpi/FXZStnxs=').hex()
+	# data = '407d140126000800021d3cca607f072383f23f'
 	pkt = LoRaWANPkt(data, nwk_swkey, app_swkey)
 	loraPktPrettyPrint(pkt)
 
-	pkt.setDownlinkLoRaPktMsg(UNCONFIRMED_DATA_UP, '2601147D', False, False, False, 0, 8, '', 2, 'PKT #8', nwk_swkey, app_swkey)
-	print(data)
+	pkt.setDownlinkLoRaPktMsg(UNCONFIRMED_DATA_DOWN, '2601147D', False, False, False, 0, 8, '', 2, 'PKT #8', nwk_swkey, app_swkey)
 	loraPktPrettyPrint(pkt)
